@@ -1,5 +1,9 @@
 # Offline smoke tests, run by `nix flake check`.
-{ pkgs }:
+{
+  pkgs,
+  # Attribute names of the per-release-line SDK packages (connectiq-sdk_8, ...).
+  sdkAttrs,
+}:
 
 let
   inherit (pkgs)
@@ -39,17 +43,31 @@ let
       fi
       touch $out
     '';
-in
-{
-  inherit connectiq-sdk connectiq-sdk-manager connectiq-sdk-use;
 
-  sdk-cli = runCommand "connectiq-sdk-cli-test" { } ''
-    export HOME=$TMPDIR
-    ${lib.getExe connectiq-sdk} --version | tee $TMPDIR/version
-    grep -q "Connect IQ Compiler version: ${connectiq-sdk.version}" $TMPDIR/version
-    ${connectiq-sdk}/bin/monkeydoc --help >/dev/null 2>&1 || true
-    touch $out
-  '';
+  sdkCli =
+    sdk:
+    runCommand "connectiq-sdk-${sdk.version}-cli-test" { } ''
+      export HOME=$TMPDIR
+      ${lib.getExe sdk} --version | tee $TMPDIR/version
+      grep -q "Connect IQ Compiler version: ${sdk.version}" $TMPDIR/version
+      touch $out
+    '';
+
+  # monkeyc and the simulator of every packaged SDK release line.
+  perSdk = lib.concatMapAttrs (
+    attr: sdk:
+    let
+      suffix = lib.removePrefix "connectiq-sdk" attr;
+    in
+    {
+      "sdk${suffix}-cli" = sdkCli sdk;
+      "sdk${suffix}-simulator" = guiSmokeTest "connectiq-simulator-${sdk.version}" "${sdk}/bin/simulator";
+    }
+  ) (lib.getAttrs sdkAttrs pkgs);
+in
+perSdk
+// {
+  inherit connectiq-sdk-manager connectiq-sdk-use;
 
   sdk-use = runCommand "connectiq-sdk-use-test" { } ''
     export HOME=$TMPDIR
@@ -132,6 +150,5 @@ in
     touch $out
   '';
 
-  sdk-simulator = guiSmokeTest "connectiq-simulator" "${connectiq-sdk}/bin/simulator";
   sdk-manager-gui = guiSmokeTest "connectiq-sdk-manager" (lib.getExe connectiq-sdk-manager);
 }

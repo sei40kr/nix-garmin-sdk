@@ -9,7 +9,11 @@
   wrapGAppsHook3,
   jdk17,
   python3,
-  source ? (lib.importJSON ../../sources.json).sdk,
+  source ?
+    let
+      sources = import ../sources.nix { inherit lib; };
+    in
+    sources.sdks.${sources.latestMajor},
 }:
 
 let

@@ -17,6 +17,7 @@ jobs:
         run: |
           nix run .#update
           git diff sources.json
+          cat sources.json
           if ! git diff --quiet sources.json; then
             echo "stale=true" >> "$GITHUB_OUTPUT"
           fi

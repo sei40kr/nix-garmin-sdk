@@ -7,6 +7,9 @@
     { self, nixpkgs }:
     let
       inherit (nixpkgs) lib;
+      sources = import ./pkgs/sources.nix { inherit lib; };
+      # One package per SDK release line, e.g. connectiq-sdk_8 = latest 8.x.
+      sdkAttrs = map (major: "connectiq-sdk_${major}") sources.majors;
       # Garmin only ships x86_64 Linux binaries.
       systems = [ "x86_64-linux" ];
       forAllSystems = f: lib.genAttrs systems (system: f (pkgsFor system));
@@ -24,39 +27,51 @@
         };
     in
     {
-      overlays.default = final: _prev: {
-        connectiq-sdk = final.callPackage ./pkgs/connectiq-sdk { };
-        connectiq-sdk-manager = final.callPackage ./pkgs/connectiq-sdk-manager { };
-        connectiq-sdk-use = final.callPackage ./pkgs/connectiq-sdk-use { };
-      };
-
-      packages = forAllSystems (pkgs: {
-        inherit (pkgs) connectiq-sdk connectiq-sdk-manager connectiq-sdk-use;
-        default = pkgs.connectiq-sdk;
-
-        update = pkgs.writeShellApplication {
-          name = "update-connectiq-sources";
-          runtimeInputs = [
-            pkgs.python3
-            pkgs.nix
-          ];
-          text = ''exec python3 ${./scripts/update.py} "$@"'';
+      overlays.default =
+        final: _prev:
+        lib.genAttrs' sources.majors (
+          major:
+          lib.nameValuePair "connectiq-sdk_${major}" (
+            final.callPackage ./pkgs/connectiq-sdk { source = sources.sdks.${major}; }
+          )
+        )
+        // {
+          connectiq-sdk = final."connectiq-sdk_${sources.latestMajor}";
+          connectiq-sdk-manager = final.callPackage ./pkgs/connectiq-sdk-manager { };
+          connectiq-sdk-use = final.callPackage ./pkgs/connectiq-sdk-use { };
         };
 
-        # Used by CI and for manual checks of the GUIs; see tests/gui-screenshot.sh.
-        gui-screenshot = pkgs.writeShellApplication {
-          name = "connectiq-gui-screenshot";
-          runtimeInputs = with pkgs; [
-            coreutils
-            dbus
-            imagemagick
-            tesseract
-            xdotool
-            xorg-server
-          ];
-          text = builtins.readFile ./tests/gui-screenshot.sh;
-        };
-      });
+      packages = forAllSystems (
+        pkgs:
+        lib.getAttrs sdkAttrs pkgs
+        // {
+          inherit (pkgs) connectiq-sdk connectiq-sdk-manager connectiq-sdk-use;
+          default = pkgs.connectiq-sdk;
+
+          update = pkgs.writeShellApplication {
+            name = "update-connectiq-sources";
+            runtimeInputs = [
+              pkgs.python3
+              pkgs.nix
+            ];
+            text = ''exec python3 ${./scripts/update.py} "$@"'';
+          };
+
+          # Used by CI and for manual checks of the GUIs; see tests/gui-screenshot.sh.
+          gui-screenshot = pkgs.writeShellApplication {
+            name = "connectiq-gui-screenshot";
+            runtimeInputs = with pkgs; [
+              coreutils
+              dbus
+              imagemagick
+              tesseract
+              xdotool
+              xorg-server
+            ];
+            text = builtins.readFile ./tests/gui-screenshot.sh;
+          };
+        }
+      );
 
       apps = forAllSystems (pkgs: {
         default = {
@@ -85,7 +100,7 @@
         };
       });
 
-      checks = forAllSystems (pkgs: import ./tests { inherit pkgs; });
+      checks = forAllSystems (pkgs: import ./tests { inherit pkgs sdkAttrs; });
 
       templates.default = {
         path = ./templates/default;

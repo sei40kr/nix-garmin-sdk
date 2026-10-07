@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Update sources.json to the latest Connect IQ SDK and SDK Manager for Linux.
+"""Update sources.json to the latest Connect IQ SDKs and SDK Manager for Linux.
 
-Usage: update.py [--file sources.json] [--force] [--sdk-version X.Y.Z]
+Usage: update.py [--file sources.json] [--force] [--min-major N]
 
-Reads Garmin's release feeds, prefetches changed archives into the Nix store
-and rewrites sources.json. The SDK Manager is published under a fixed URL that
+Tracks the newest release of every SDK release line (major version) from
+--min-major on, since devices that stop receiving firmware updates are capped
+at older SDK lines. Reads Garmin's release feeds, prefetches changed archives
+into the Nix store and rewrites sources.json. The SDK Manager is published under a fixed URL that
 Garmin may overwrite without bumping the version, so its (small) archive is
 always re-hashed.
 """
@@ -23,6 +25,9 @@ BASE = os.environ.get(
 SDKS_URL = f"{BASE}/sdks/sdks.json"
 MANAGER_URL = f"{BASE}/sdk-manager/sdk-manager.json"
 MANAGER_ZIP = "connectiq-sdk-manager-linux.zip"
+# Oldest SDK line whose Linux binaries use the GTK 3 / WebKitGTK 4.0 stack this
+# flake knows how to run.
+DEFAULT_MIN_MAJOR = 4
 
 LINUX_SDK_RE = re.compile(
     r"^connectiq-sdk-lin-(?P<version>\d+(?:\.\d+)+)-(?P<release>\d{4}-\d{2}-\d{2})-(?P<rev>[0-9a-f]+)\.zip$"
@@ -49,24 +54,26 @@ def prefetch(url):
     return json.loads(out)["hash"]
 
 
-def latest_sdk(wanted=None):
-    candidates = []
+def latest_sdks(min_major):
+    """Newest Linux SDK of each major version >= min_major, keyed by major."""
+    latest = {}
     for entry in fetch_json(SDKS_URL):
         m = LINUX_SDK_RE.match(entry.get("linux") or "")
         if not m:
             continue
-        candidates.append(
-            {
-                "version": m["version"],
-                "release": m["release"],
-                "url": f"{BASE}/sdks/{entry['linux']}",
-            }
-        )
-    if wanted:
-        candidates = [c for c in candidates if c["version"] == wanted]
-    if not candidates:
-        sys.exit(f"no Linux SDK found in {SDKS_URL}" + (f" for {wanted}" if wanted else ""))
-    return max(candidates, key=lambda c: version_key(c["version"]))
+        sdk = {
+            "version": m["version"],
+            "release": m["release"],
+            "url": f"{BASE}/sdks/{entry['linux']}",
+        }
+        major = m["version"].split(".")[0]
+        if int(major) < min_major:
+            continue
+        if major not in latest or version_key(sdk["version"]) > version_key(latest[major]["version"]):
+            latest[major] = sdk
+    if not latest:
+        sys.exit(f"no Linux SDK >= {min_major} found in {SDKS_URL}")
+    return latest
 
 
 def latest_manager():
@@ -94,7 +101,12 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--file", default="sources.json")
     ap.add_argument("--force", action="store_true", help="re-prefetch even if versions match")
-    ap.add_argument("--sdk-version", help="pin a specific SDK version instead of the latest")
+    ap.add_argument(
+        "--min-major",
+        type=int,
+        default=DEFAULT_MIN_MAJOR,
+        help=f"oldest SDK major version to package (default {DEFAULT_MIN_MAJOR})",
+    )
     args = ap.parse_args()
 
     try:
@@ -103,16 +115,22 @@ def main():
     except FileNotFoundError:
         sources = {}
 
-    sdk, sdk_changed = update_entry(
-        "sdk", sources.get("sdk", {}), latest_sdk(args.sdk_version), args.force
-    )
+    old_sdks = sources.get("sdks", {})
+    sdks = {}
+    changed = False
+    for major, sdk in sorted(latest_sdks(args.min_major).items(), key=lambda kv: int(kv[0])):
+        sdks[major], c = update_entry(f"sdk {major}", old_sdks.get(major, {}), sdk, args.force)
+        changed |= c
+    for major in old_sdks.keys() - sdks.keys():
+        print(f"sdk {major}: dropped")
+        changed = True
     manager, manager_changed = update_entry(
         "sdkManager", sources.get("sdkManager", {}), latest_manager(), force=True
     )
 
-    if not (sdk_changed or manager_changed):
+    if not (changed or manager_changed):
         return
-    sources = {"sdk": sdk, "sdkManager": manager}
+    sources = {"sdks": sdks, "sdkManager": manager}
     with open(args.file, "w") as f:
         json.dump(sources, f, indent=2)
         f.write("\n")

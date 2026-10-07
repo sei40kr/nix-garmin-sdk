@@ -9,7 +9,7 @@
   wrapGAppsHook3,
   makeDesktopItem,
   copyDesktopItems,
-  source ? (lib.importJSON ../../sources.json).sdkManager,
+  source ? (import ../sources.nix { inherit lib; }).sdkManager,
 }:
 
 let
