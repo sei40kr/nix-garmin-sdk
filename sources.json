@@ -1,5 +1,11 @@
 {
   "sdks": {
+    "8": {
+      "version": "8.4.1",
+      "release": "2026-02-03",
+      "url": "https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-8.4.1-2026-02-03-e9f77eeaa.zip",
+      "hash": "sha256-YvONCGNmF8jorwXbZwWnH8A8BRVhzs/QRUNMvrbB7yo="
+    },
     "9": {
       "version": "9.2.0",
       "release": "2026-06-09",

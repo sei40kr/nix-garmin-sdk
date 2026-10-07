@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Update sources.json to the latest Connect IQ SDKs and SDK Manager for Linux.
 
-Usage: update.py [--file sources.json] [--force] [--min-major N]
+Usage: update.py [--file sources.json] [--force] [--min-major N] [--list]
 
 Tracks the newest release of every SDK release line (major version) from
 --min-major on, since devices that stop receiving firmware updates are capped
@@ -107,7 +107,13 @@ def main():
         default=DEFAULT_MIN_MAJOR,
         help=f"oldest SDK major version to package (default {DEFAULT_MIN_MAJOR})",
     )
+    ap.add_argument("--list", action="store_true", help="print Garmin's SDK feed and exit")
     args = ap.parse_args()
+
+    if args.list:
+        for entry in fetch_json(SDKS_URL):
+            print(entry.get("version"), entry.get("release"), entry.get("linux"))
+        return
 
     try:
         with open(args.file) as f:

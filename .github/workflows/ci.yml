@@ -15,6 +15,7 @@ jobs:
       - name: Compare sources.json with Garmin's feeds
         id: sources
         run: |
+          nix run .#update -- --list
           nix run .#update
           git diff sources.json
           cat sources.json
