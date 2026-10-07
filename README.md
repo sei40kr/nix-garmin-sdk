@@ -5,13 +5,15 @@ Nix flake for [Garmin Connect IQ](https://developer.garmin.com/connect-iq/) deve
 | Package                 | Contents                                                                                                                   |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `connectiq-sdk`         | The latest Connect IQ SDK: `monkeyc`, `monkeydo`, `monkeydoc`, `barrelbuild`, `era`, `connectiq`/`simulator`, … (Java included) |
-| `connectiq-sdk_<major>` | The latest release of each SDK major version, e.g. `connectiq-sdk_7` = latest 7.x                                         |
+| `connectiq-sdk_<major>` | The latest release of each SDK major version, e.g. `connectiq-sdk_8` = latest 8.x                                         |
 | `connectiq-sdk-manager` | The Connect IQ SDK Manager (`sdkmanager`), used to log in and download device definitions                                |
 | `connectiq-sdk-use`     | Registers the SDK from Nix as the current SDK in `~/.Garmin/ConnectIQ`                                                    |
 
 Devices that no longer get firmware updates can be stuck on an older SDK line, so the flake
-packages the newest release of every major version from 4 on (see `sources.json`), with
-`connectiq-sdk` pointing at the newest overall.
+packages the newest release of every major version in Garmin's SDK feed (see `sources.json`;
+currently `connectiq-sdk_8` = 8.4.1 and `connectiq-sdk_9` = 9.2.0), with `connectiq-sdk`
+pointing at the newest overall. Garmin's feed only lists SDKs from 8.1.0 on; for an older SDK,
+pass your own archive through `override` (below).
 
 The SDK is pinned by Nix; device definitions stay under the SDK Manager's control in
 `~/.Garmin/ConnectIQ/Devices`, which is where `monkeyc` and the simulator look for them.
@@ -67,7 +69,7 @@ To use an older release line, put e.g. `connectiq-sdk_7` in the dev shell instea
 
 `sources.json` pins the SDK and SDK Manager archives. `nix run .#update` reads Garmin's feeds
 (`sdks.json`, `sdk-manager.json`), keeps the newest release of each SDK major version
-(`--min-major N`, default 4), prefetches new archives and rewrites `sources.json`. The **Update sources** GitHub workflow runs it daily,
+(`--min-major N`, default 4; `--list` prints the feed), prefetches new archives and rewrites `sources.json`. The **Update sources** GitHub workflow runs it daily,
 runs `nix flake check` and opens a pull request.
 
 Garmin publishes the SDK Manager under a fixed URL (`connectiq-sdk-manager-linux.zip`). When it
