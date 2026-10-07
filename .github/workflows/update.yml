@@ -1,0 +1,43 @@
+name: Update sources
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+
+      - name: Update sources.json
+        id: update
+        run: |
+          nix run .#update
+          if git diff --quiet sources.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "sdk=$(jq -r .sdk.version sources.json)" >> "$GITHUB_OUTPUT"
+            echo "manager=$(jq -r .sdkManager.version sources.json)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and test
+        if: steps.update.outputs.changed == 'true'
+        run: nix flake check -L
+
+      - uses: peter-evans/create-pull-request@v7
+        if: steps.update.outputs.changed == 'true'
+        with:
+          branch: update/connectiq-sources
+          commit-message: "Update Connect IQ SDK ${{ steps.update.outputs.sdk }}, SDK Manager ${{ steps.update.outputs.manager }}"
+          title: "Update Connect IQ SDK ${{ steps.update.outputs.sdk }}, SDK Manager ${{ steps.update.outputs.manager }}"
+          body: |
+            Automated update by `nix run .#update`. `nix flake check` passed.
+          delete-branch: true

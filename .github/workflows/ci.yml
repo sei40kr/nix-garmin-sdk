@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+
+      - name: Compare sources.json with Garmin's feeds
+        id: sources
+        run: |
+          nix run .#update
+          git diff sources.json
+          if ! git diff --quiet sources.json; then
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Flake checks (build + offline smoke tests)
+        run: nix flake check -L
+
+      - name: SDK Manager shows Garmin's sign-in page
+        run: |
+          mgr=$(nix build .#connectiq-sdk-manager --no-link --print-out-paths)
+          PATH="$(nix build .#gui-screenshot --no-link --print-out-paths)/bin:$PATH"
+          tests/check-login-page.sh "$mgr/bin/sdkmanager" screenshots/sdkmanager
+
+      - name: Simulator starts
+        if: always()
+        run: |
+          sdk=$(nix build .#connectiq-sdk --no-link --print-out-paths)
+          nix run .#gui-screenshot -- screenshots/simulator 20 "$sdk/bin/connectiq"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: screenshots
+
+      - name: Fail if sources.json is stale
+        if: steps.sources.outputs.stale == 'true'
+        run: |
+          echo "::error::sources.json is out of date; run 'nix run .#update'"
+          exit 1
