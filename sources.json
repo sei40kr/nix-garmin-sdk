@@ -7,10 +7,10 @@
       "hash": "sha256-YvONCGNmF8jorwXbZwWnH8A8BRVhzs/QRUNMvrbB7yo="
     },
     "9": {
-      "version": "9.2.0",
-      "release": "2026-06-09",
-      "url": "https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-9.2.0-2026-06-09-92a1605b2.zip",
-      "hash": "sha256-SQfYRVtlHFoAqGXjZMxPGSHAVbknnHyGNMenpnc7VZM="
+      "version": "9.3.0",
+      "release": "2026-10-20",
+      "url": "https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-9.3.0-2026-10-20-95888f262.zip",
+      "hash": "sha256-FlPMmO3XAClnCj4/zUrW50aXSot1intzak4RUG39i8g="
     }
   },
   "sdkManager": {
