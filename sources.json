@@ -1,0 +1,43 @@
+{
+  "sdkManager": {
+    "version": "1.0.16",
+    "hash": "sha256-SB6oYHjOLoxwEEdeTiqi01RGumZxCQRDvyIjlpk8Dvw="
+  },
+  "sdks": [
+    {
+      "version": "8.1.1",
+      "file": "connectiq-sdk-lin-8.1.1-2025-03-27-66dae750f.zip",
+      "hash": "sha256-P6hcUsuA6XJZZvh2prHPpv2FpGWYzAhJQm9ztxnFML8="
+    },
+    {
+      "version": "8.2.3",
+      "file": "connectiq-sdk-lin-8.2.3-2025-08-11-cac5b3b21.zip",
+      "hash": "sha256-eZf04aBU1N10gR7QI12VnLunn5j6ZB0C36JmZ79rx80="
+    },
+    {
+      "version": "8.3.0",
+      "file": "connectiq-sdk-lin-8.3.0-2025-09-22-5813687a0.zip",
+      "hash": "sha256-3wo6AnbSe4U/IqU37q33axx+OiYMaCu+kUqnA8lyXRU="
+    },
+    {
+      "version": "8.4.1",
+      "file": "connectiq-sdk-lin-8.4.1-2026-02-03-e9f77eeaa.zip",
+      "hash": "sha256-YvONCGNmF8jorwXbZwWnH8A8BRVhzs/QRUNMvrbB7yo="
+    },
+    {
+      "version": "9.1.0",
+      "file": "connectiq-sdk-lin-9.1.0-2026-03-09-6a872a80b.zip",
+      "hash": "sha256-lvoqMpRjepDDloYWpvMCJRGHr9Gj0+IN+b/4oGsTiSA="
+    },
+    {
+      "version": "9.2.0",
+      "file": "connectiq-sdk-lin-9.2.0-2026-06-09-92a1605b2.zip",
+      "hash": "sha256-SQfYRVtlHFoAqGXjZMxPGSHAVbknnHyGNMenpnc7VZM="
+    },
+    {
+      "version": "9.3.0",
+      "file": "connectiq-sdk-lin-9.3.0-2026-10-20-95888f262.zip",
+      "hash": "sha256-FlPMmO3XAClnCj4/zUrW50aXSot1intzak4RUG39i8g="
+    }
+  ]
+}
