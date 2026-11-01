@@ -30,12 +30,12 @@ configuration.
 Nix pins the SDK. Device files and fonts require a Garmin login, so the SDK Manager downloads them
 into `~/.Garmin/ConnectIQ/{Devices,Fonts}`, where every SDK package looks for them.
 
+> [!WARNING]
+> Do not download SDKs with the SDK Manager; they do not run on NixOS (see
+> [SDKs downloaded by the SDK Manager](#sdks-downloaded-by-the-sdk-manager)).
+
 1. Run `nix run github:sei40kr/nix-garmin-sdk#connectiq-sdk-manager`, log in, and download the
    devices you target from the **Devices** tab.
-
-   > [!WARNING]
-   > Do not download SDKs there; they do not run on NixOS (see
-   > [SDKs downloaded by the SDK Manager](#sdks-downloaded-by-the-sdk-manager)).
 2. Add an SDK to your project's dev shell:
 
    ```nix
