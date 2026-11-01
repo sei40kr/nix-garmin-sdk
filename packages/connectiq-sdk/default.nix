@@ -2,7 +2,6 @@
 let
   inherit (pkgs) lib;
   sources = lib.importJSON ../../sources.json;
-  webkitgtk_4_0-compat = pkgs.callPackage ./webkitgtk-4.0-compat.nix { };
 
   attrName =
     version: "connectiq-sdk_${lib.replaceStrings [ "." ] [ "_" ] (lib.versions.majorMinor version)}";
@@ -10,7 +9,7 @@ let
     map (
       source:
       lib.nameValuePair (attrName source.version) (
-        pkgs.callPackage ./package.nix { inherit source webkitgtk_4_0-compat; }
+        pkgs.callPackage ./package.nix { inherit source; }
       )
     ) sources.sdks
   );
@@ -18,7 +17,7 @@ let
 in
 versions.${attrName latest.version}.overrideAttrs (old: {
   passthru = old.passthru or { } // {
-    inherit versions webkitgtk_4_0-compat;
+    inherit versions;
     updateScript = pkgs.writeShellApplication {
       name = "connectiq-sdk-update";
       runtimeInputs = with pkgs; [

@@ -84,9 +84,10 @@ published under an unversioned URL, which always serves the latest release.
 The simulator, `monkeymotion` and `sdkmanager` link against `libwebkit2gtk-4.0.so.37`,
 `libjavascriptcoregtk-4.0.so.18` and `libsoup-2.4.so.1`, which nixpkgs has removed. None of them
 calls libsoup directly, and every webkit and JavaScriptCore symbol they use also exists in 4.1.
-[`webkitgtk-4.0-compat.nix`](packages/connectiq-sdk/webkitgtk-4.0-compat.nix) provides symlinks
-with the 4.0 names that point to `webkitgtk_4_1` and `libsoup_3`, and `autoPatchelfHook` links the
-binaries against them.
+`patchelf --replace-needed` renames those dependencies to `libwebkit2gtk-4.1.so.0` and
+`libjavascriptcoregtk-4.1.so.0` and drops `libsoup-2.4.so.1`, and `autoPatchelfHook` then links
+the binaries against `webkitgtk_4_1`. `webkitgtk_6_0` is not an option: it is built on GTK 4, and
+the binaries link GTK 3, which cannot share a process with GTK 4.
 
 The binaries are patched rather than started through `ld.so --library-path`. They find their
 resources in `../share/<name>` relative to `/proc/self/exe`, which would point at the loader instead.

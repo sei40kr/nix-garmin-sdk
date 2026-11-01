@@ -1,6 +1,5 @@
 { pkgs, perSystem, ... }:
 (pkgs.callPackage ./package.nix {
-  inherit (perSystem.self.connectiq-sdk) webkitgtk_4_0-compat;
   source = (pkgs.lib.importJSON ../../sources.json).sdkManager;
 }).overrideAttrs
   (old: {

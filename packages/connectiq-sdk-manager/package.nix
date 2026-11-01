@@ -22,7 +22,6 @@
   libxext,
   libxkbcommon,
   libxxf86vm,
-  webkitgtk_4_0-compat,
   webkitgtk_4_1,
   zlib,
   source,
@@ -65,7 +64,6 @@ stdenv.mkDerivation (finalAttrs: {
     libxext
     libxkbcommon
     libxxf86vm
-    webkitgtk_4_0-compat
     webkitgtk_4_1
     zlib
   ];
@@ -86,6 +84,13 @@ stdenv.mkDerivation (finalAttrs: {
   '';
 
   preFixup = ''
+    # Before autoPatchelfHook, so it resolves the 4.1 names (see README)
+    patchelf \
+      --replace-needed libwebkit2gtk-4.0.so.37 libwebkit2gtk-4.1.so.0 \
+      --replace-needed libjavascriptcoregtk-4.0.so.18 libjavascriptcoregtk-4.1.so.0 \
+      --remove-needed libsoup-2.4.so.1 \
+      $out/bin/sdkmanager
+
     wrapGApp $out/bin/sdkmanager
   '';
 
